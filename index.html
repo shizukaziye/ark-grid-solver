@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ark Grid Solver - Lost Ark Astrogem Cutter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ark Grid Solver</h1>
+            <p class="subtitle">Lost Ark Astrogem Cutting Optimizer</p>
+        </header>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2>Astrogem Configuration</h2>
+                
+                <div class="form-group">
+                    <label for="gem-type">Gem Type:</label>
+                    <select id="gem-type">
+                        <option value="order">Order</option>
+                        <option value="chaos">Chaos</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="base-cost">Base Cost:</label>
+                    <select id="base-cost">
+                        <option value="8">8 Cost</option>
+                        <option value="9">9 Cost</option>
+                        <option value="10">10 Cost</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Effect 1:</label>
+                    <select id="effect1"></select>
+                    <label for="effect1-level">Level:</label>
+                    <input type="number" id="effect1-level" min="1" max="5" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label>Effect 2:</label>
+                    <select id="effect2"></select>
+                    <label for="effect2-level">Level:</label>
+                    <input type="number" id="effect2-level" min="1" max="5" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="willpower-level">Willpower Level:</label>
+                    <input type="number" id="willpower-level" min="1" max="5" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="order-level">Order Level:</label>
+                    <input type="number" id="order-level" min="1" max="5" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="gem-rarity">Gem Rarity:</label>
+                    <select id="gem-rarity">
+                        <option value="rare">Rare (Blue) - 7 turns</option>
+                        <option value="epic">Epic (Purple) - 9 turns</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button id="calculate-btn">Calculate Score</button>
+                    <button id="optimize-btn">Find Optimal</button>
+                    <button id="start-cutting-btn">Start Cutting Process</button>
+                    <button id="reset-btn">Reset</button>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h2>Results</h2>
+                
+                <div class="result-card">
+                    <h3>Willpower Cost</h3>
+                    <div id="willpower-cost" class="result-value">-</div>
+                    <div class="result-detail" id="willpower-detail"></div>
+                </div>
+
+                <div class="result-card">
+                    <h3>Total Score</h3>
+                    <div id="total-score" class="result-value score">-</div>
+                </div>
+
+                <div class="score-breakdown">
+                    <h3>Score Breakdown</h3>
+                    <div id="score-breakdown" class="breakdown-list"></div>
+                </div>
+
+                <div class="optimization-results" id="optimization-results" style="display: none;">
+                    <h3>Optimal Configuration</h3>
+                    <div id="optimal-config"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cutting Process Section -->
+        <div class="cutting-section" id="cutting-section" style="display: none;">
+            <h2>Cutting Process</h2>
+            
+            <div class="solver-settings">
+                <h3>Solver Settings</h3>
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label for="baseline-score">Baseline Score:</label>
+                        <input type="number" id="baseline-score" min="0" max="50" value="8" step="0.1">
+                        <span class="setting-desc">Score where gem value = 0</span>
+                    </div>
+                    <div class="setting-item">
+                        <label for="gold-per-damage">Gold per Damage:</label>
+                        <input type="number" id="gold-per-damage" min="0" value="1500000" step="10000">
+                        <span class="setting-desc">Gold value per damage point</span>
+                    </div>
+                    <div class="setting-item">
+                        <label for="monte-carlo-runs">Monte Carlo Runs:</label>
+                        <input type="number" id="monte-carlo-runs" min="100" max="10000" value="1000" step="100">
+                        <span class="setting-desc">Number of simulations</span>
+                    </div>
+                    <div class="setting-item">
+                        <button id="run-solver-btn" class="solver-btn">Run Solver</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="solver-recommendation" id="solver-recommendation" style="display: none;">
+                <h3>Solver Recommendation</h3>
+                <div id="recommendation-content"></div>
+            </div>
+
+            <div class="cutting-status">
+                <div class="status-item highlight">
+                    <span class="status-label">Turn:</span>
+                    <span id="current-turn" class="status-value">1</span> / <span id="max-turns" class="status-value">7</span>
+                    <span class="status-detail">(<span id="turns-remaining">6</span> remaining)</span>
+                </div>
+                <div class="status-item highlight">
+                    <span class="status-label">Rerolls Remaining:</span>
+                    <span id="rerolls-remaining" class="status-value">2</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Process Cost:</span>
+                    <span id="process-cost" class="status-value">900</span> gold
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Total Gold Spent:</span>
+                    <span id="total-gold" class="status-value">0</span> gold
+                </div>
+            </div>
+
+            <div class="current-gem-state">
+                <div class="gem-state-header">
+                    <h3>Current Gem State</h3>
+                    <button id="edit-gem-state-btn" class="edit-btn">Edit State</button>
+                </div>
+                <div class="gem-state-display" id="gem-state-display">
+                    <div class="gem-state-grid">
+                        <div class="state-item">
+                            <span class="state-label">Willpower:</span>
+                            <span id="cut-willpower-level" class="state-value">1</span>
+                        </div>
+                        <div class="state-item">
+                            <span class="state-label">Order:</span>
+                            <span id="cut-order-level" class="state-value">1</span>
+                        </div>
+                        <div class="state-item">
+                            <span class="state-label" id="cut-effect1-label">Effect 1:</span>
+                            <span id="cut-effect1-level" class="state-value">1</span>
+                        </div>
+                        <div class="state-item">
+                            <span class="state-label" id="cut-effect2-label">Effect 2:</span>
+                            <span id="cut-effect2-level" class="state-value">1</span>
+                        </div>
+                    </div>
+                    <div class="current-score-display">
+                        <strong>Current Score:</strong> <span id="cut-current-score" class="score-value">0.00</span>
+                    </div>
+                </div>
+                <div id="gem-state-editor" class="gem-state-editor" style="display: none;">
+                    <h4>Edit Gem State</h4>
+                    <div class="editor-section">
+                        <h5>Gem Levels</h5>
+                        <div class="editor-grid">
+                            <div class="editor-field">
+                                <label for="edit-willpower">Willpower Level:</label>
+                                <input type="number" id="edit-willpower" min="1" max="5" value="1">
+                            </div>
+                            <div class="editor-field">
+                                <label for="edit-order">Order Level:</label>
+                                <input type="number" id="edit-order" min="1" max="5" value="1">
+                            </div>
+                            <div class="editor-field">
+                                <label id="edit-effect1-label" for="edit-effect1">Effect 1 Level:</label>
+                                <input type="number" id="edit-effect1" min="1" max="5" value="1">
+                            </div>
+                            <div class="editor-field">
+                                <label id="edit-effect2-label" for="edit-effect2">Effect 2 Level:</label>
+                                <input type="number" id="edit-effect2" min="1" max="5" value="1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="editor-section">
+                        <h5>Cutting Progress</h5>
+                        <div class="editor-grid">
+                            <div class="editor-field">
+                                <label for="edit-current-turn">Current Turn:</label>
+                                <input type="number" id="edit-current-turn" min="1" value="1">
+                            </div>
+                            <div class="editor-field">
+                                <label for="edit-rerolls-remaining">Rerolls Remaining:</label>
+                                <input type="number" id="edit-rerolls-remaining" min="0" value="2">
+                            </div>
+                            <div class="editor-field">
+                                <label for="edit-total-gold">Total Gold Spent:</label>
+                                <input type="number" id="edit-total-gold" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="editor-actions">
+                        <button id="save-gem-state-btn" class="save-btn">Save Changes</button>
+                        <button id="cancel-gem-state-btn" class="cancel-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="outcomes-section">
+                <h3 id="outcomes-title">Available Outcomes</h3>
+                <div class="outcomes-controls">
+                    <button id="edit-outcomes-btn" class="edit-btn">Edit Outcomes</button>
+                    <button id="reset-outcomes-btn" class="edit-btn" style="display: none;">Reset to Generated</button>
+                </div>
+                <div id="outcomes-container" class="outcomes-grid"></div>
+                <div id="outcomes-editor" class="outcomes-editor" style="display: none;">
+                    <h4>Edit Outcomes Manually</h4>
+                    <div id="outcome-editor-items"></div>
+                    <div class="editor-actions">
+                        <button id="save-outcomes-btn" class="save-btn">Save Outcomes</button>
+                        <button id="cancel-edit-btn" class="cancel-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cutting-actions">
+                <button id="process-btn" class="action-btn process-btn">Process Random Outcome (900 gold)</button>
+                <button id="reroll-btn" class="action-btn reroll-btn">Reroll Outcomes</button>
+                <button id="delete-btn" class="action-btn delete-btn">Delete Gem</button>
+            </div>
+            <div class="outcome-help">
+                <p><strong>Tip:</strong> Click on any outcome card above to select and process that specific outcome, or use the "Process Random Outcome" button to randomly select one.</p>
+            </div>
+
+            <div class="cutting-history">
+                <h3>Cutting History</h3>
+                <div id="history-container" class="history-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="solver.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
